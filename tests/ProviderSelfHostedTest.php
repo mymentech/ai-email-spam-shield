@@ -65,7 +65,6 @@ class ProviderSelfHostedTest extends TestCase {
         $json = json_encode( [ 'spam_probability' => 0.5 ] );
 
         Functions\expect( 'esc_url_raw' )->once()->andReturnArg( 0 );
-        Functions\expect( 'sanitize_text_field' )->once()->andReturnArg( 0 );
         Functions\expect( 'wp_json_encode' )->once()->andReturnUsing( 'json_encode' );
         Functions\expect( 'wp_remote_post' )
             ->once()
@@ -87,5 +86,33 @@ class ProviderSelfHostedTest extends TestCase {
         ] );
         $result = $provider->get_score( 'Subject', 'Body' );
         $this->assertEqualsWithDelta( 0.5, $result, 0.001 );
+    }
+
+    public function test_returns_null_when_response_missing_spam_probability_key(): void {
+        $json = json_encode( [ 'label' => 'spam' ] ); // no spam_probability key
+
+        Functions\expect( 'esc_url_raw' )->once()->andReturnArg( 0 );
+        Functions\expect( 'wp_json_encode' )->once()->andReturnUsing( 'json_encode' );
+        Functions\expect( 'wp_remote_post' )->once()->andReturn( [] );
+        Functions\expect( 'is_wp_error' )->once()->andReturn( false );
+        Functions\expect( 'wp_remote_retrieve_response_code' )->once()->andReturn( 200 );
+        Functions\expect( 'wp_remote_retrieve_body' )->once()->andReturn( $json );
+
+        $provider = new Provider_Self_Hosted( [ 'self_hosted_url' => 'http://spam-api:8000/predict' ] );
+        $this->assertNull( $provider->get_score( 'Subject', 'Body' ) );
+    }
+
+    public function test_returns_null_when_spam_probability_out_of_range(): void {
+        $json = json_encode( [ 'spam_probability' => 1.5 ] ); // out of range
+
+        Functions\expect( 'esc_url_raw' )->once()->andReturnArg( 0 );
+        Functions\expect( 'wp_json_encode' )->once()->andReturnUsing( 'json_encode' );
+        Functions\expect( 'wp_remote_post' )->once()->andReturn( [] );
+        Functions\expect( 'is_wp_error' )->once()->andReturn( false );
+        Functions\expect( 'wp_remote_retrieve_response_code' )->once()->andReturn( 200 );
+        Functions\expect( 'wp_remote_retrieve_body' )->once()->andReturn( $json );
+
+        $provider = new Provider_Self_Hosted( [ 'self_hosted_url' => 'http://spam-api:8000/predict' ] );
+        $this->assertNull( $provider->get_score( 'Subject', 'Body' ) );
     }
 }

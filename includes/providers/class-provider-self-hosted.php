@@ -23,7 +23,7 @@ class Provider_Self_Hosted implements Provider_Interface {
             return null;
         }
 
-        $key     = sanitize_text_field( $this->options['self_hosted_key'] ?? '' );
+        $key     = trim( $this->options['self_hosted_key'] ?? '' );
         $headers = [ 'Content-Type' => 'application/json' ];
         if ( ! empty( $key ) ) {
             $headers['Authorization'] = 'Bearer ' . $key;
