@@ -84,8 +84,9 @@ class Scanner {
      */
     public static function fetch_ai_score( string $subject, string $body ): ?float {
         $options = get_option( 'aiess_settings', array() );
-        $api_url = esc_url_raw( $options['api_url'] ?? 'http://spam-api:8000/predict' );
-        $api_key = sanitize_text_field( $options['api_key'] ?? '' );
+        // Env vars (from .env or server config) take precedence over DB settings.
+        $api_url = esc_url_raw( getenv( 'AIESS_API_URL' ) ?: ( $options['api_url'] ?? 'http://spam-api:8000/predict' ) );
+        $api_key = sanitize_text_field( getenv( 'AIESS_API_KEY' ) ?: ( $options['api_key'] ?? '' ) );
 
         if ( empty( $api_url ) ) {
             return null;

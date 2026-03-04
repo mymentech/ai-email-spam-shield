@@ -28,7 +28,34 @@ class Core {
 	 * Private constructor — register all hooks here.
 	 */
 	private function __construct() {
+		self::load_dotenv();
 		$this->register_hooks();
+	}
+
+	/**
+	 * Load AIESS_* variables from a .env file in the plugin directory.
+	 * Only sets a variable if it is not already defined in the environment,
+	 * so server-level / Docker env vars always take precedence.
+	 */
+	public static function load_dotenv(): void {
+		$env_file = AIESS_PLUGIN_DIR . '.env';
+		if ( ! is_readable( $env_file ) ) {
+			return;
+		}
+		$lines = file( $env_file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES );
+		foreach ( $lines as $line ) {
+			$line = trim( $line );
+			if ( str_starts_with( $line, '#' ) || ! str_contains( $line, '=' ) ) {
+				continue;
+			}
+			[ $key, $value ] = explode( '=', $line, 2 );
+			$key   = trim( $key );
+			$value = trim( $value );
+			// Only set variables prefixed AIESS_ and only when not already set.
+			if ( str_starts_with( $key, 'AIESS_' ) && false === getenv( $key ) ) {
+				putenv( "{$key}={$value}" );
+			}
+		}
 	}
 
 	/**
