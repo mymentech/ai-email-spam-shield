@@ -44,6 +44,7 @@ class Scanner {
             $rule_score = Rules_Engine::score( $subject, $body, $ip );
             $result     = array(
                 'ai_score'    => null,
+                'hard_blocked' => true,
                 'rule_score'  => $rule_score,
                 'final_score' => 1.0,
                 'blocked'     => true,

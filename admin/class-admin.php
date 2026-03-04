@@ -332,7 +332,8 @@ class Admin {
 				.then(function(data) {
 					if ( data.success ) {
 						var r = data.data;
-						document.getElementById('aiess-r-ai').textContent    = r.ai_score !== null ? parseFloat(r.ai_score).toFixed(3) + ' (via API)' : 'N/A (API unavailable)';
+						var aiText = r.ai_score !== null ? parseFloat(r.ai_score).toFixed(3) + ' (via API)' : ( r.hard_blocked ? 'N/A (hard-block — AI skipped)' : 'N/A (API unavailable)' );
+					document.getElementById('aiess-r-ai').textContent    = aiText;
 						document.getElementById('aiess-r-rule').textContent  = parseFloat(r.rule_score).toFixed(3) + ' (local rules)';
 						document.getElementById('aiess-r-final').textContent = parseFloat(r.final_score).toFixed(3);
 						var verdict = document.getElementById('aiess-r-verdict');
