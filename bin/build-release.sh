@@ -18,6 +18,8 @@ cd "${PLUGIN_DIR}/.."
 zip -r "${OUTPUT_ZIP}" "${PLUGIN_SLUG}/" \
     --exclude "${PLUGIN_SLUG}/.git/*" \
     --exclude "${PLUGIN_SLUG}/.claude/*" \
+    --exclude "${PLUGIN_SLUG}/.env" \
+    --exclude "${PLUGIN_SLUG}/.env.*" \
     --exclude "${PLUGIN_SLUG}/.phpunit.result.cache" \
     --exclude "${PLUGIN_SLUG}/composer.json" \
     --exclude "${PLUGIN_SLUG}/composer.lock" \
