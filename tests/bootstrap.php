@@ -62,4 +62,5 @@ require_once AIESS_PLUGIN_DIR . 'includes/class-logger.php';
 require_once AIESS_PLUGIN_DIR . 'includes/class-scanner.php';
 require_once AIESS_PLUGIN_DIR . 'includes/class-updater.php';
 require_once AIESS_PLUGIN_DIR . 'includes/class-provider-interface.php';
+require_once AIESS_PLUGIN_DIR . 'includes/class-provider-llm-base.php';
 require_once AIESS_PLUGIN_DIR . 'includes/providers/class-provider-self-hosted.php';
