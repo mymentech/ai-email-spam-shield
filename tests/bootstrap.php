@@ -1,7 +1,7 @@
 <?php
 require_once dirname( __DIR__ ) . '/vendor/autoload.php';
 
-// WordPress function stubs for unit tests.
+// Constants (safe to define before Patchwork — they are not interceptable anyway).
 if ( ! defined( 'ABSPATH' ) ) {
     define( 'ABSPATH', '/tmp/wordpress/' );
 }
@@ -37,94 +37,29 @@ if ( ! defined( 'WP_CONTENT_DIR' ) ) {
     define( 'WP_CONTENT_DIR', dirname( __DIR__, 3 ) );
 }
 
-// Stub WP functions used in plugin classes.
-if ( ! function_exists( 'wp_strip_all_tags' ) ) {
-    function wp_strip_all_tags( string $string, bool $remove_breaks = false ): string {
-        $string = strip_tags( $string );
-        if ( $remove_breaks ) {
-            $string = preg_replace( '/[\r\n\t]+/', ' ', $string );
+// WP_Error class stub (must be a class, not a function — defined before stubs.php is fine).
+if ( ! class_exists( 'WP_Error' ) ) {
+    class WP_Error {
+        public string $code;
+        public string $message;
+        public function __construct( string $code = '', string $message = '' ) {
+            $this->code    = $code;
+            $this->message = $message;
         }
-        return $string;
-    }
-}
-if ( ! function_exists( 'get_transient' ) ) {
-    function get_transient( string $key ) { return false; }
-}
-if ( ! function_exists( 'set_transient' ) ) {
-    function set_transient( string $key, $value, int $expiration = 0 ): bool { return true; }
-}
-if ( ! function_exists( 'wp_parse_url' ) ) {
-    function wp_parse_url( string $url, int $component = -1 ) {
-        return parse_url( $url, $component );
-    }
-}
-if ( ! function_exists( 'sanitize_text_field' ) ) {
-    function sanitize_text_field( string $str ): string {
-        return strip_tags( trim( $str ) );
-    }
-}
-if ( ! function_exists( 'sanitize_email' ) ) {
-    function sanitize_email( string $email ): string {
-        // Match WordPress behaviour: strip invalid characters, lowercase.
-        $email = strtolower( trim( $email ) );
-        $email = preg_replace( '/[^a-z0-9!#$%&\'*+\/=?^_`{|}~.-@]/', '', $email );
-        return $email;
+        public function get_error_message(): string { return $this->message; }
     }
 }
 
-// Stubs for PUC (plugin-update-checker) functions called during construction.
-if ( ! function_exists( 'plugin_basename' ) ) {
-    function plugin_basename( string $file ): string {
-        return basename( dirname( $file ) ) . '/' . basename( $file );
-    }
-}
-if ( ! function_exists( 'did_action' ) ) {
-    function did_action( string $tag ): int { return 0; }
-}
-if ( ! function_exists( 'wp_next_scheduled' ) ) {
-    function wp_next_scheduled( string $hook, array $args = array() ) { return false; }
-}
-if ( ! function_exists( 'wp_schedule_event' ) ) {
-    function wp_schedule_event( int $timestamp, string $recurrence, string $hook, array $args = array(), bool $wp_error = false ) { return true; }
-}
-if ( ! function_exists( 'get_locale' ) ) {
-    function get_locale(): string { return 'en_US'; }
-}
-if ( ! function_exists( 'is_admin' ) ) {
-    function is_admin(): bool { return false; }
-}
-if ( ! function_exists( 'load_textdomain' ) ) {
-    function load_textdomain( string $domain, string $mofile, string $locale = '' ): bool { return true; }
-}
-if ( ! function_exists( 'get_option' ) ) {
-    function get_option( string $option, $default = false ) { return $default; }
-}
-if ( ! function_exists( 'wp_http_supports' ) ) {
-    function wp_http_supports( array $capabilities = array(), ?string $url = null ): bool { return true; }
-}
-if ( ! function_exists( 'register_deactivation_hook' ) ) {
-    function register_deactivation_hook( string $file, callable $callback ): void {}
-}
-if ( ! function_exists( 'register_activation_hook' ) ) {
-    function register_activation_hook( string $file, callable $callback ): void {}
-}
-if ( ! function_exists( 'wp_rand' ) ) {
-    function wp_rand( int $min = 0, int $max = 0 ): int { return rand( $min, $max ); }
-}
-if ( ! function_exists( 'wp_unschedule_hook' ) ) {
-    function wp_unschedule_hook( string $hook ): int|false { return 0; }
-}
-if ( ! function_exists( 'get_site_transient' ) ) {
-    function get_site_transient( string $transient ) { return false; }
-}
-if ( ! function_exists( 'set_site_transient' ) ) {
-    function set_site_transient( string $transient, $value, int $expiration = 0 ): bool { return true; }
-}
-if ( ! function_exists( 'delete_site_transient' ) ) {
-    function delete_site_transient( string $transient ): bool { return true; }
-}
+// Patchwork MUST be loaded before any WP function stubs so Brain\Monkey can intercept them.
+require_once dirname( __DIR__ ) . '/vendor/antecedent/patchwork/Patchwork.php';
 
+// WP function stubs — loaded through Patchwork's stream wrapper so they are interceptable.
+require_once __DIR__ . '/stubs.php';
+
+// Plugin classes.
 require_once AIESS_PLUGIN_DIR . 'includes/class-rules-engine.php';
 require_once AIESS_PLUGIN_DIR . 'includes/class-logger.php';
 require_once AIESS_PLUGIN_DIR . 'includes/class-scanner.php';
 require_once AIESS_PLUGIN_DIR . 'includes/class-updater.php';
+require_once AIESS_PLUGIN_DIR . 'includes/class-provider-interface.php';
+require_once AIESS_PLUGIN_DIR . 'includes/providers/class-provider-self-hosted.php';
