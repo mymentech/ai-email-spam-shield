@@ -1,0 +1,17 @@
+# Files and directories excluded from WordPress.org SVN deployment.
+# Keep in GitHub for development; never ship to end users.
+
+/.distignore
+/.gitignore
+/.phpunit.result.cache
+/composer.json
+/composer.lock
+/docker-compose.yml
+/docker-compose-sample.yml
+/docs
+/phpunit.xml
+/spam-api
+/tests
+/vendor
+/bin
+CLAUDE.md

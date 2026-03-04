@@ -1,0 +1,38 @@
+services:
+
+  # AI Email Spam Shield — FastAPI spam detection microservice
+  #
+  # Usage:
+  #   1. Copy this file to your server and rename it docker-compose.yml
+  #      (or merge the spam-api service into your existing docker-compose.yml)
+  #   2. Set AIESS_API_KEY to a strong random string, or leave empty for
+  #      local-only access (no auth required)
+  #   3. Build and start: docker-compose up -d spam-api
+  #   4. Enter the API URL in WordPress: AI Spam Shield → Settings → API URL
+  #      e.g. http://spam-api:8000/predict  (if on the same Docker network)
+  #        or https://your-domain.com/predict  (if exposed via reverse proxy)
+  #
+  # The BERT model (~430 MB) is downloaded automatically on first start.
+
+  spam-api:
+    build:
+      context: ./spam-api
+      dockerfile: Dockerfile
+    container_name: spam_api
+    restart: unless-stopped
+    environment:
+      - AIESS_API_KEY=          # Set a secret key, or leave empty to disable auth
+      - MODEL_NAME=AventIQ-AI/bert-spam-detection
+    networks:
+      - mymentech
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+networks:
+  mymentech:
+    external: true
+    name: mymentech    # Replace with your existing Docker network name

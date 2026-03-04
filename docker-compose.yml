@@ -1,0 +1,70 @@
+services:
+  # WordPress (PHP + Apache)
+  wordpress:
+    image: thecodingmachine/php:8.2-v4-apache-node22
+    restart: unless-stopped
+    container_name: testwp
+    depends_on:
+      - testwp_db
+    volumes:
+      - ./wordpress:/var/www/html
+    working_dir: /var/www/html
+    environment:
+      - APACHE_DOCUMENT_ROOT=
+      - DB_HOST=testwp_db
+      - DB_PORT=3306
+      - DB_DATABASE=testwp_db
+      - DB_USERNAME=testwp_user
+      - DB_PASSWORD=secret123
+      - PHP_EXTENSION_GD=1
+      - PHP_EXTENSION_PDO_MYSQL=1
+      - PHP_EXTENSION_MYSQLI=1
+      - PHP_EXTENSION_INTL=1
+      - PHP_EXTENSION_ZIP=1
+      - PHP_EXTENSION_EXIF=1
+      - PHP_INI_MEMORY_LIMIT=1G
+      - PHP_INI_UPLOAD_MAX_FILESIZE=128M
+      - PHP_INI_POST_MAX_SIZE=128M
+      - TEMPLATE_PHP_INI=development
+    networks:
+      - mymentech
+
+  # MySQL Database for WordPress
+  testwp_db:
+    image: mysql:8.0
+    restart: unless-stopped
+    container_name: testwp_db
+    environment:
+      MYSQL_DATABASE: testwp_db
+      MYSQL_USER: testwp_user
+      MYSQL_PASSWORD: secret123
+      MYSQL_ROOT_PASSWORD: rootsecret
+    volumes:
+      - ./dbdata_wp:/var/lib/mysql
+    networks:
+      - mymentech
+
+
+  # AI Email Spam Shield — FastAPI microservice
+  spam-api:
+    build:
+      context: ./wordpress/wp-content/plugins/ai-email-spam-shield/spam-api
+      dockerfile: Dockerfile
+    container_name: spam_api
+    restart: unless-stopped
+    environment:
+      - AIESS_API_KEY=          # Leave empty for local-only access, or set a key
+      - MODEL_NAME=AventIQ-AI/bert-spam-detection
+    networks:
+      - mymentech
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+networks:
+  mymentech:
+    external: true
+    name: mymentech

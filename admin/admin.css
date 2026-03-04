@@ -1,0 +1,36 @@
+.aiess-wrap { max-width: 1200px; }
+.aiess-brand { color: #888; margin-top: -10px; }
+
+.aiess-stats-grid {
+	display: grid;
+	grid-template-columns: repeat(4, 1fr);
+	gap: 20px;
+	margin: 20px 0;
+}
+.aiess-stat-card {
+	background: #fff;
+	border: 1px solid #ddd;
+	border-radius: 4px;
+	padding: 20px;
+	text-align: center;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+.aiess-stat-card.status-ok    { border-color: #00a32a; }
+.aiess-stat-card.status-error { border-color: #cc0000; }
+.aiess-stat-number { font-size: 2.5em; font-weight: 700; line-height: 1; }
+.aiess-stat-label  { color: #666; font-size: 0.9em; }
+
+.aiess-filter-bar { margin-bottom: 15px; display: flex; gap: 8px; align-items: center; }
+.aiess-logs-table th { font-weight: 600; }
+
+.aiess-badge {
+	display: inline-block;
+	padding: 2px 8px;
+	border-radius: 3px;
+	font-size: 0.8em;
+	font-weight: 700;
+}
+.aiess-badge-blocked { background: #cc0000; color: #fff; }
+.aiess-badge-allowed { background: #00a32a; color: #fff; }
