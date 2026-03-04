@@ -3,7 +3,7 @@ Contributors: mozammelhaque
 Tags: spam, email, contact form, spam filter, ai, machine learning, spam detection, antispam
 Requires at least: 6.0
 Tested up to: 6.7
-Stable tag: 1.0.1
+Stable tag: 1.0.2
 Requires PHP: 8.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -110,6 +110,11 @@ Yes. Go to **AI Spam Shield → Test Scanner**, paste a subject and message body
 4. Test Scanner — paste any email content and see the live score breakdown
 
 == Changelog ==
+
+= 1.0.2 =
+* Added .env file support — API URL and key can now be set via .env instead of wp-admin Settings
+* Fixed Test Scanner UI incorrectly showing "API unavailable" when hard-block was triggered (AI is intentionally skipped for hard-block content)
+* Added GitHub-based auto-updater — plugin updates now appear in wp-admin Plugins page
 
 = 1.0.1 =
 * Fixed critical bug: switched from `wp_mail` filter to `pre_wp_mail` short-circuit — emails are now reliably blocked before delivery
