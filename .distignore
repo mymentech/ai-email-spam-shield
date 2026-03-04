@@ -2,6 +2,7 @@
 # Keep in GitHub for development; never ship to end users.
 
 /.distignore
+/.claude
 /.gitignore
 /.phpunit.result.cache
 /composer.json
