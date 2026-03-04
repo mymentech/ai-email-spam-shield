@@ -64,3 +64,6 @@ require_once AIESS_PLUGIN_DIR . 'includes/class-updater.php';
 require_once AIESS_PLUGIN_DIR . 'includes/class-provider-interface.php';
 require_once AIESS_PLUGIN_DIR . 'includes/class-provider-llm-base.php';
 require_once AIESS_PLUGIN_DIR . 'includes/providers/class-provider-self-hosted.php';
+require_once AIESS_PLUGIN_DIR . 'includes/providers/class-provider-openai.php';
+require_once AIESS_PLUGIN_DIR . 'includes/providers/class-provider-groq.php';
+require_once AIESS_PLUGIN_DIR . 'includes/providers/class-provider-deepseek.php';
