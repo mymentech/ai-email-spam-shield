@@ -47,5 +47,6 @@ class ProviderGeminiTest extends TestCase {
 
         $provider = new Provider_Gemini( [ 'gemini_key' => 'AIza-test', 'gemini_model' => 'gemini-1.5-flash' ] );
         $provider->get_score( 'Sub', 'Body' );
+        $this->addToAssertionCount( 1 ); // Mockery::on() constraint acts as assertion
     }
 }

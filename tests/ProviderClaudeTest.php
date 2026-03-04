@@ -45,5 +45,6 @@ class ProviderClaudeTest extends TestCase {
 
         $provider = new Provider_Claude( [ 'claude_key' => 'sk-ant-test' ] );
         $provider->get_score( 'Sub', 'Body' );
+        $this->addToAssertionCount( 1 ); // Mockery::on() constraint acts as assertion
     }
 }
