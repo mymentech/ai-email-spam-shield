@@ -56,8 +56,8 @@ class Scanner {
         // Rule-based score — pure PHP, always available.
         $rule_score = Rules_Engine::score( $subject, $body, $ip );
 
-        // AI score — remote API, may fail/timeout.
-        $ai_score = self::fetch_ai_score( $subject, $body );
+        // AI score — delegate to the configured provider.
+        $ai_score = Provider_Factory::make()->get_score( $subject, $body );
 
         // Weighted final score.
         $final_score = self::compute_final_score( $ai_score, $rule_score, $ai_weight, $rule_weight );
@@ -73,64 +73,6 @@ class Scanner {
         set_transient( $cache_key, $result, 5 * MINUTE_IN_SECONDS );
 
         return $result;
-    }
-
-    /**
-     * Call the AI spam detection microservice.
-     *
-     * @param string $subject  Email subject.
-     * @param string $body     Email body.
-     * @return float|null      Spam probability 0–1, or null on failure/timeout.
-     */
-    public static function fetch_ai_score( string $subject, string $body ): ?float {
-        $options = get_option( 'aiess_settings', array() );
-        // Env vars (from .env or server config) take precedence over DB settings.
-        $api_url = esc_url_raw( getenv( 'AIESS_API_URL' ) ?: ( $options['api_url'] ?? 'http://spam-api:8000/predict' ) );
-        $api_key = sanitize_text_field( getenv( 'AIESS_API_KEY' ) ?: ( $options['api_key'] ?? '' ) );
-
-        if ( empty( $api_url ) ) {
-            return null;
-        }
-
-        $headers = array( 'Content-Type' => 'application/json' );
-        if ( ! empty( $api_key ) ) {
-            $headers['Authorization'] = 'Bearer ' . $api_key;
-        }
-
-        $response = wp_remote_post(
-            $api_url,
-            array(
-                'timeout' => 3,
-                'headers' => $headers,
-                'body'    => wp_json_encode( array( 'text' => $subject . ' ' . $body ) ),
-            )
-        );
-
-        if ( is_wp_error( $response ) ) {
-            return null;
-        }
-
-        $code = (int) wp_remote_retrieve_response_code( $response );
-        if ( 200 !== $code ) {
-            return null;
-        }
-
-        return self::parse_ai_response( wp_remote_retrieve_body( $response ) );
-    }
-
-    /**
-     * Parse the raw JSON response from the AI API.
-     *
-     * @param string $body  Raw HTTP response body.
-     * @return float|null   Spam probability, or null if response is invalid.
-     */
-    public static function parse_ai_response( string $body ): ?float {
-        $data = json_decode( $body, true );
-        if ( ! is_array( $data ) || ! isset( $data['spam_probability'] ) ) {
-            return null;
-        }
-        $prob = (float) $data['spam_probability'];
-        return ( $prob >= 0.0 && $prob <= 1.0 ) ? $prob : null;
     }
 
     /**

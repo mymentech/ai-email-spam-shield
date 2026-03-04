@@ -40,29 +40,6 @@ class ScannerTest extends TestCase {
         $this->assertTrue( Scanner::is_spam( 0.80, 0.80 ) );
     }
 
-    public function test_parse_ai_response_valid(): void {
-        $body   = json_encode( array( 'spam_probability' => 0.92, 'label' => 'spam' ) );
-        $result = Scanner::parse_ai_response( $body );
-        $this->assertEqualsWithDelta( 0.92, $result, 0.001 );
-    }
-
-    public function test_parse_ai_response_invalid_json_returns_null(): void {
-        $result = Scanner::parse_ai_response( 'not json at all' );
-        $this->assertNull( $result );
-    }
-
-    public function test_parse_ai_response_missing_key_returns_null(): void {
-        $body   = json_encode( array( 'label' => 'spam' ) );
-        $result = Scanner::parse_ai_response( $body );
-        $this->assertNull( $result );
-    }
-
-    public function test_parse_ai_response_out_of_range_returns_null(): void {
-        $body   = json_encode( array( 'spam_probability' => 1.5, 'label' => 'spam' ) );
-        $result = Scanner::parse_ai_response( $body );
-        $this->assertNull( $result );
-    }
-
     public function test_compute_final_score_capped_at_one(): void {
         $final = Scanner::compute_final_score( 1.0, 1.0, 0.7, 0.3 );
         $this->assertLessThanOrEqual( 1.0, $final );
