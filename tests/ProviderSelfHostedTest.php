@@ -93,7 +93,7 @@ class ProviderSelfHostedTest extends TestCase {
 
         Functions\expect( 'esc_url_raw' )->once()->andReturnArg( 0 );
         Functions\expect( 'wp_json_encode' )->once()->andReturnUsing( 'json_encode' );
-        Functions\expect( 'wp_remote_post' )->once()->andReturn( [] );
+        Functions\expect( 'wp_remote_post' )->once()->andReturn( [ 'response' => [ 'code' => 200 ] ] );
         Functions\expect( 'is_wp_error' )->once()->andReturn( false );
         Functions\expect( 'wp_remote_retrieve_response_code' )->once()->andReturn( 200 );
         Functions\expect( 'wp_remote_retrieve_body' )->once()->andReturn( $json );
@@ -107,7 +107,7 @@ class ProviderSelfHostedTest extends TestCase {
 
         Functions\expect( 'esc_url_raw' )->once()->andReturnArg( 0 );
         Functions\expect( 'wp_json_encode' )->once()->andReturnUsing( 'json_encode' );
-        Functions\expect( 'wp_remote_post' )->once()->andReturn( [] );
+        Functions\expect( 'wp_remote_post' )->once()->andReturn( [ 'response' => [ 'code' => 200 ] ] );
         Functions\expect( 'is_wp_error' )->once()->andReturn( false );
         Functions\expect( 'wp_remote_retrieve_response_code' )->once()->andReturn( 200 );
         Functions\expect( 'wp_remote_retrieve_body' )->once()->andReturn( $json );
