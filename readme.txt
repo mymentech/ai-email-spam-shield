@@ -104,10 +104,7 @@ Yes. Go to **AI Spam Shield → Test Scanner**, paste a subject and message body
 
 == Screenshots ==
 
-1. Dashboard — live stats and AI API status indicator
-2. Settings — API URL, key, spam threshold, and score weights
-3. Logs — paginated, filterable email log with per-entry scores
-4. Test Scanner — paste any email content and see the live score breakdown
+1. Plugin overview — status dashboard, spam signals, key features, and live logs at a glance
 
 == Changelog ==
 
