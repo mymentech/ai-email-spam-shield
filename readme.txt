@@ -3,7 +3,7 @@ Contributors: mymentech
 Tags: spam, email, contact form, spam filter, ai, machine learning, spam detection, antispam
 Requires at least: 6.0
 Tested up to: 6.7
-Stable tag: 1.0.2
+Stable tag: 1.1.0
 Requires PHP: 8.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -110,6 +110,15 @@ Yes. Go to **AI Spam Shield → Test Scanner**, paste a subject and message body
 4. Test Scanner — paste any email content and see the live score breakdown
 
 == Changelog ==
+
+= 1.1.0 =
+* Added multi-provider AI support: OpenAI, Groq, DeepSeek, Anthropic Claude, Google Gemini, Cohere, Ollama, and OpenAI-compatible providers
+* Added Provider_Factory for dynamic AI provider selection
+* Updated admin Settings page with provider selector and live health check
+* Added dismissable global privacy notice for cloud AI provider data transmission
+* Added contextual inline privacy warning on settings page for cloud AI providers
+* Removed .env file dependency (load_dotenv dropped in favour of wp-admin settings)
+* Updated plugin author to MymenTech
 
 = 1.0.2 =
 * Added .env file support — API URL and key can now be set via .env instead of wp-admin Settings
