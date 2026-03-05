@@ -106,6 +106,8 @@ class AdminTest extends TestCase {
 		Functions\expect( 'wp_send_json_error' )
 			->once()
 			->with( 'Unauthorized' );
+		Functions\expect( 'update_user_meta' )->never();
+		Functions\expect( 'wp_send_json_success' )->never();
 
 		$this->admin->handle_dismiss_privacy_notice();
 	}

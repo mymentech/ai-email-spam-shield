@@ -146,6 +146,7 @@ class Admin {
 		check_ajax_referer( 'aiess_dismiss_privacy', 'nonce' );
 		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_send_json_error( 'Unauthorized' );
+			return;
 		}
 		update_user_meta( get_current_user_id(), 'aiess_privacy_notice_dismissed', 1 );
 		wp_send_json_success();
