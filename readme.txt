@@ -51,11 +51,11 @@ Certain high-confidence signals — explicit sexual content, darknet/underground
 
 = Third Party Services =
 
-This plugin can optionally connect to a **self-hosted** FastAPI microservice that you deploy on your own server. No data is sent to any third-party service. The BERT model (`AventIQ-AI/bert-spam-detection`) is downloaded to your own server during setup and runs locally.
+Depending on the AI provider you select in Settings, email content may be sent to a third-party cloud service for spam analysis. Supported cloud providers include OpenAI, Groq, DeepSeek, Anthropic Claude, Google Gemini, Cohere, and any OpenAI-compatible endpoint. Each provider's own privacy policy and terms of service apply. If you require fully local processing, select the **Self-Hosted** provider option and run your own microservice.
 
 = Privacy =
 
-This plugin logs email metadata (subject, sender address, IP address, spam scores, blocked status) in your local WordPress database table (`wp_ai_spam_logs`). No data is transmitted externally. Logs are automatically deleted after 30 days.
+This plugin logs email metadata (subject, sender address, IP address, spam scores, blocked status) in your local WordPress database table (`wp_ai_spam_logs`). Logs are automatically deleted after 30 days. If a cloud AI provider is configured, email content is transmitted to that provider's API for spam scoring — please review your chosen provider's privacy policy before use.
 
 == Installation ==
 
@@ -88,7 +88,7 @@ The plugin enforces a strict 3-second timeout. If the API does not respond in ti
 
 = Is any data sent to a third party? =
 
-No. All processing happens on your own server. The BERT model is downloaded to your server during microservice setup and never phones home.
+It depends on the AI provider you choose. If you use a cloud provider (OpenAI, Groq, DeepSeek, Anthropic Claude, Google Gemini, Cohere, etc.), email content is sent to that provider's API for spam scoring. If you use the **Self-Hosted** provider with your own local microservice, all processing stays on your server and no data leaves your infrastructure.
 
 = Can I adjust the spam threshold? =
 
