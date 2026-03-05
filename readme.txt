@@ -3,7 +3,7 @@ Contributors: mymentech
 Tags: spam, email, contact form, spam filter, ai, machine learning, spam detection, antispam
 Requires at least: 6.0
 Tested up to: 6.9
-Stable tag: 1.1.0
+Stable tag: 1.1.0.1
 Requires PHP: 8.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -107,6 +107,11 @@ Yes. Go to **AI Spam Shield → Test Scanner**, paste a subject and message body
 1. Plugin overview — status dashboard, spam signals, key features, and live logs at a glance
 
 == Changelog ==
+
+= 1.1.0.1 =
+* Added plugin banner and screenshot assets
+* Updated FAQ, Third Party Services, and Privacy sections to reflect cloud AI provider data transmission
+* Updated tested up to WordPress 6.9
 
 = 1.1.0 =
 * Added multi-provider AI support: OpenAI, Groq, DeepSeek, Anthropic Claude, Google Gemini, Cohere, Ollama, and OpenAI-compatible providers
