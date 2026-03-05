@@ -34,3 +34,11 @@
 }
 .aiess-badge-blocked { background: #cc0000; color: #fff; }
 .aiess-badge-allowed { background: #00a32a; color: #fff; }
+
+/* Inline privacy notice on settings page */
+.aiess-inline-notice {
+    border-left: 4px solid #dba617;
+    background: #fff8e5;
+    padding: 8px 12px;
+    margin: 5px 0 15px;
+}

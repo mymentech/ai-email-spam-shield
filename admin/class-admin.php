@@ -259,7 +259,7 @@ class Admin {
 				</table>
 
 				<?php if ( ! get_user_meta( get_current_user_id(), 'aiess_privacy_notice_dismissed', true ) ) : ?>
-				<div id="aiess-settings-privacy-notice" class="notice notice-warning" style="display:none;margin:5px 0 15px;">
+				<div id="aiess-settings-privacy-notice" class="aiess-inline-notice" style="display:none;">
 					<p>
 						<strong><?php esc_html_e( 'Privacy Notice:', 'ai-email-spam-shield' ); ?></strong>
 						<?php esc_html_e( 'The selected AI provider will receive email subject lines and message bodies for spam scoring. This data is transmitted to an external server. Ensure your privacy policy covers this processing.', 'ai-email-spam-shield' ); ?>
@@ -518,6 +518,8 @@ class Admin {
 						headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
 						body: 'action=aiess_dismiss_privacy_notice&nonce=<?php echo esc_js( wp_create_nonce( 'aiess_dismiss_privacy' ) ); ?>'
 					}).then(function () {
+						if ( privNotice ) { privNotice.style.display = 'none'; }
+					}).catch(function () {
 						if ( privNotice ) { privNotice.style.display = 'none'; }
 					});
 				});
