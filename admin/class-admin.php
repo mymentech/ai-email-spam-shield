@@ -134,7 +134,7 @@ class Admin {
 						method: 'POST',
 						headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
 						body: 'action=aiess_dismiss_privacy_notice&nonce=<?php echo esc_js( $nonce ); ?>'
-					});
+					}).catch(function () {});
 				}
 			});
 		}());
@@ -712,6 +712,7 @@ class Admin {
 		check_ajax_referer( 'aiess_test_scan', 'nonce' );
 		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_send_json_error( 'Unauthorized' );
+			return;
 		}
 
 		$subject = sanitize_text_field( wp_unslash( $_POST['subject'] ?? '' ) );
