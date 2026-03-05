@@ -1,5 +1,5 @@
 === AI Email Spam Shield ===
-Contributors: mozammelhaque
+Contributors: mymentech
 Tags: spam, email, contact form, spam filter, ai, machine learning, spam detection, antispam
 Requires at least: 6.0
 Tested up to: 6.7
@@ -12,7 +12,7 @@ Hybrid AI + rule-based spam detection for outgoing WordPress emails. Blocks spam
 
 == Description ==
 
-**AI Email Spam Shield** by [Mozammel Haque](https://www.mymentech.com) protects your WordPress site from sending spam by intercepting all outgoing email before delivery and scoring it through a two-layer hybrid system.
+**AI Email Spam Shield** WordPress plugin by [MymenTech](https://www.mymentech.com) protects your WordPress site from sending spam by intercepting all outgoing email before delivery and scoring it through a two-layer hybrid system.
 
 = How It Works =
 

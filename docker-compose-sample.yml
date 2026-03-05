@@ -24,7 +24,7 @@ services:
       - AIESS_API_KEY=          # Set a secret key, or leave empty to disable auth
       - MODEL_NAME=AventIQ-AI/bert-spam-detection
     networks:
-      - mymentech
+      - your_docker_network
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
       interval: 30s
@@ -35,4 +35,6 @@ services:
 networks:
   mymentech:
     external: true
-    name: mymentech    # Replace with your existing Docker network name
+    name: your_docker_network    # Replace with your existing Docker network name
+
+
