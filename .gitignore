@@ -1,4 +1,7 @@
 .phpunit.result.cache
 vendor/
 docs/
+.claude
 CLAUDE.md
+credentials
+.env

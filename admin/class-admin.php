@@ -68,14 +68,47 @@ class Admin {
 	}
 
 	public function sanitize_settings( array $input ): array {
-		return array(
-			'enabled'     => ! empty( $input['enabled'] ) ? 1 : 0,
-			'api_url'     => esc_url_raw( $input['api_url'] ?? '' ),
-			'api_key'     => sanitize_text_field( $input['api_key'] ?? '' ),
-			'threshold'   => min( 1.0, max( 0.0, (float) ( $input['threshold'] ?? 0.80 ) ) ),
-			'ai_weight'   => min( 1.0, max( 0.0, (float) ( $input['ai_weight'] ?? 0.7 ) ) ),
-			'rule_weight' => min( 1.0, max( 0.0, (float) ( $input['rule_weight'] ?? 0.3 ) ) ),
-		);
+		$valid_providers = [ 'self_hosted', 'openai', 'claude', 'gemini', 'groq', 'cohere', 'deepseek', 'ollama', 'openai_compat' ];
+		$provider        = in_array( $input['ai_provider'] ?? '', $valid_providers, true )
+			? $input['ai_provider']
+			: 'self_hosted';
+
+		return [
+			'enabled'             => ! empty( $input['enabled'] ) ? 1 : 0,
+			'threshold'           => min( 1.0, max( 0.0, (float) ( $input['threshold'] ?? 0.80 ) ) ),
+			'ai_weight'           => min( 1.0, max( 0.0, (float) ( $input['ai_weight'] ?? 0.7 ) ) ),
+			'rule_weight'         => min( 1.0, max( 0.0, (float) ( $input['rule_weight'] ?? 0.3 ) ) ),
+			// Provider selection
+			'ai_provider'         => $provider,
+			// Self-hosted
+			'self_hosted_url'     => esc_url_raw( $input['self_hosted_url'] ?? '' ),
+			'self_hosted_key'     => sanitize_text_field( $input['self_hosted_key'] ?? '' ),
+			// OpenAI
+			'openai_key'          => sanitize_text_field( $input['openai_key'] ?? '' ),
+			'openai_model'        => sanitize_text_field( $input['openai_model'] ?? 'gpt-4o-mini' ),
+			// Claude
+			'claude_key'          => sanitize_text_field( $input['claude_key'] ?? '' ),
+			'claude_model'        => sanitize_text_field( $input['claude_model'] ?? 'claude-haiku-4-5-20251001' ),
+			// Gemini
+			'gemini_key'          => sanitize_text_field( $input['gemini_key'] ?? '' ),
+			'gemini_model'        => sanitize_text_field( $input['gemini_model'] ?? 'gemini-1.5-flash' ),
+			// Groq
+			'groq_key'            => sanitize_text_field( $input['groq_key'] ?? '' ),
+			'groq_model'          => sanitize_text_field( $input['groq_model'] ?? 'llama-3.1-8b-instant' ),
+			// Cohere
+			'cohere_key'          => sanitize_text_field( $input['cohere_key'] ?? '' ),
+			'cohere_model'        => sanitize_text_field( $input['cohere_model'] ?? 'command-r' ),
+			// DeepSeek
+			'deepseek_key'        => sanitize_text_field( $input['deepseek_key'] ?? '' ),
+			'deepseek_model'      => sanitize_text_field( $input['deepseek_model'] ?? 'deepseek-chat' ),
+			// Ollama
+			'ollama_url'          => esc_url_raw( $input['ollama_url'] ?? 'http://localhost:11434' ),
+			'ollama_model'        => sanitize_text_field( $input['ollama_model'] ?? '' ),
+			// OpenAI-compatible
+			'openai_compat_url'   => esc_url_raw( $input['openai_compat_url'] ?? '' ),
+			'openai_compat_key'   => sanitize_text_field( $input['openai_compat_key'] ?? '' ),
+			'openai_compat_model' => sanitize_text_field( $input['openai_compat_model'] ?? '' ),
+		];
 	}
 
 	// -------------------------------------------------------------------------
@@ -83,13 +116,29 @@ class Admin {
 	// -------------------------------------------------------------------------
 
 	public function page_dashboard(): void {
-		$stats   = Logger::get_stats();
-		$options = get_option( 'aiess_settings', array() );
-		$api_url = esc_url_raw( $options['api_url'] ?? 'http://spam-api:8000' );
-		// Ping the /health endpoint instead of /predict.
-		$health_url = preg_replace( '/\/predict$/', '/health', rtrim( $api_url, '/' ) );
-		$response   = wp_remote_get( $health_url, array( 'timeout' => 3 ) );
-		$api_ok     = ! is_wp_error( $response ) && 200 === (int) wp_remote_retrieve_response_code( $response );
+		$stats     = Logger::get_stats();
+		$options   = get_option( 'aiess_settings', array() );
+		$provider  = $options['ai_provider'] ?? 'self_hosted';
+
+		if ( 'self_hosted' === $provider ) {
+			$api_url    = esc_url_raw( $options['self_hosted_url'] ?? 'http://spam-api:8000' );
+			$health_url = preg_replace( '/\/predict$/', '/health', rtrim( $api_url, '/' ) );
+			$response   = wp_remote_get( $health_url, array( 'timeout' => 3 ) );
+			$api_ok     = ! is_wp_error( $response ) && 200 === (int) wp_remote_retrieve_response_code( $response );
+		} else {
+			$key_fields = [
+				'openai'        => 'openai_key',
+				'claude'        => 'claude_key',
+				'gemini'        => 'gemini_key',
+				'groq'          => 'groq_key',
+				'cohere'        => 'cohere_key',
+				'deepseek'      => 'deepseek_key',
+				'ollama'        => 'ollama_model',
+				'openai_compat' => 'openai_compat_url',
+			];
+			$field  = $key_fields[ $provider ] ?? '';
+			$api_ok = ! empty( $options[ $field ] );
+		}
 		?>
 		<div class="wrap aiess-wrap">
 			<h1><?php esc_html_e( 'AI Spam Shield — Dashboard', 'ai-email-spam-shield' ); ?></h1>
@@ -110,7 +159,15 @@ class Admin {
 				</div>
 				<div class="aiess-stat-card <?php echo $api_ok ? 'status-ok' : 'status-error'; ?>">
 					<span class="aiess-stat-number"><?php echo $api_ok ? '&#10003;' : '&#10007;'; ?></span>
-					<span class="aiess-stat-label"><?php esc_html_e( 'AI API Status', 'ai-email-spam-shield' ); ?></span>
+					<span class="aiess-stat-label">
+					<?php
+					if ( 'self_hosted' === $provider ) {
+						esc_html_e( 'AI API Status', 'ai-email-spam-shield' );
+					} else {
+						esc_html_e( 'AI Provider', 'ai-email-spam-shield' );
+					}
+					?>
+				</span>
 				</div>
 			</div>
 		</div>
@@ -118,7 +175,19 @@ class Admin {
 	}
 
 	public function page_settings(): void {
-		$options = get_option( 'aiess_settings', array() );
+		$options  = get_option( 'aiess_settings', array() );
+		$provider = $options['ai_provider'] ?? 'self_hosted';
+		$providers = [
+			'self_hosted'   => __( 'Self-Hosted (BERT microservice)', 'ai-email-spam-shield' ),
+			'openai'        => __( 'OpenAI (GPT-4o-mini, GPT-4o, etc.)', 'ai-email-spam-shield' ),
+			'claude'        => __( 'Claude (Anthropic)', 'ai-email-spam-shield' ),
+			'gemini'        => __( 'Gemini (Google)', 'ai-email-spam-shield' ),
+			'groq'          => __( 'Groq (fast inference)', 'ai-email-spam-shield' ),
+			'cohere'        => __( 'Cohere', 'ai-email-spam-shield' ),
+			'deepseek'      => __( 'DeepSeek', 'ai-email-spam-shield' ),
+			'ollama'        => __( 'Ollama (local)', 'ai-email-spam-shield' ),
+			'openai_compat' => __( 'OpenAI-Compatible (LM Studio, etc.)', 'ai-email-spam-shield' ),
+		];
 		?>
 		<div class="wrap aiess-wrap">
 			<h1><?php esc_html_e( 'AI Spam Shield — Settings', 'ai-email-spam-shield' ); ?></h1>
@@ -135,22 +204,207 @@ class Admin {
 						</td>
 					</tr>
 					<tr>
-						<th scope="row"><label for="aiess_api_url"><?php esc_html_e( 'API URL', 'ai-email-spam-shield' ); ?></label></th>
+						<th scope="row"><label for="aiess_ai_provider"><?php esc_html_e( 'AI Provider', 'ai-email-spam-shield' ); ?></label></th>
 						<td>
-							<input type="url" id="aiess_api_url" name="aiess_settings[api_url]"
-								   value="<?php echo esc_attr( $options['api_url'] ?? 'http://spam-api:8000/predict' ); ?>"
-								   class="regular-text">
-							<p class="description"><?php esc_html_e( 'URL of the FastAPI spam detection service. Default: http://spam-api:8000/predict', 'ai-email-spam-shield' ); ?></p>
+							<select id="aiess_ai_provider" name="aiess_settings[ai_provider]">
+								<?php foreach ( $providers as $value => $label ) : ?>
+									<option value="<?php echo esc_attr( $value ); ?>" <?php selected( $provider, $value ); ?>>
+										<?php echo esc_html( $label ); ?>
+									</option>
+								<?php endforeach; ?>
+							</select>
 						</td>
+					</tr>
+				</table>
+
+				<!-- Self-hosted -->
+				<table class="form-table aiess-provider-fields" id="aiess-fields-self_hosted" role="presentation">
+					<tr><th colspan="2"><strong><?php esc_html_e( 'Self-Hosted Setup', 'ai-email-spam-shield' ); ?></strong></th></tr>
+					<tr><td colspan="2"><details><summary><?php esc_html_e( 'Setup Instructions', 'ai-email-spam-shield' ); ?></summary>
+					<p class="description"><?php esc_html_e( 'Run the BERT microservice using Docker: clone the plugin repo, copy spam-api/docker-compose-sample.yml, set AIESS_API_KEY, then run: docker-compose up -d spam-api. Requires ~500 MB disk for the model.', 'ai-email-spam-shield' ); ?></p>
+					</details></td></tr>
+					<tr>
+						<th><label for="aiess_self_hosted_url"><?php esc_html_e( 'API URL', 'ai-email-spam-shield' ); ?></label></th>
+						<td><input type="url" id="aiess_self_hosted_url" name="aiess_settings[self_hosted_url]"
+								   value="<?php echo esc_attr( $options['self_hosted_url'] ?? 'http://spam-api:8000/predict' ); ?>"
+								   class="regular-text"></td>
 					</tr>
 					<tr>
-						<th scope="row"><label for="aiess_api_key"><?php esc_html_e( 'API Key (optional)', 'ai-email-spam-shield' ); ?></label></th>
-						<td>
-							<input type="password" id="aiess_api_key" name="aiess_settings[api_key]"
-								   value="<?php echo esc_attr( $options['api_key'] ?? '' ); ?>"
-								   class="regular-text" autocomplete="new-password">
-						</td>
+						<th><label for="aiess_self_hosted_key"><?php esc_html_e( 'API Key (optional)', 'ai-email-spam-shield' ); ?></label></th>
+						<td><input type="password" id="aiess_self_hosted_key" name="aiess_settings[self_hosted_key]"
+								   value="<?php echo esc_attr( $options['self_hosted_key'] ?? '' ); ?>"
+								   class="regular-text" autocomplete="new-password"></td>
 					</tr>
+				</table>
+
+				<!-- OpenAI -->
+				<table class="form-table aiess-provider-fields" id="aiess-fields-openai" role="presentation">
+					<tr><th colspan="2"><strong><?php esc_html_e( 'OpenAI Setup', 'ai-email-spam-shield' ); ?></strong></th></tr>
+					<tr><td colspan="2"><details><summary><?php esc_html_e( 'Setup Instructions', 'ai-email-spam-shield' ); ?></summary>
+					<p class="description"><?php esc_html_e( 'Get your API key from platform.openai.com → API Keys. Recommended model: gpt-4o-mini (fast and cheap). Usage is billed per token.', 'ai-email-spam-shield' ); ?></p>
+					</details></td></tr>
+					<tr>
+						<th><label for="aiess_openai_key"><?php esc_html_e( 'API Key', 'ai-email-spam-shield' ); ?></label></th>
+						<td><input type="password" id="aiess_openai_key" name="aiess_settings[openai_key]"
+								   value="<?php echo esc_attr( $options['openai_key'] ?? '' ); ?>"
+								   class="regular-text" autocomplete="new-password"></td>
+					</tr>
+					<tr>
+						<th><label for="aiess_openai_model"><?php esc_html_e( 'Model', 'ai-email-spam-shield' ); ?></label></th>
+						<td><input type="text" id="aiess_openai_model" name="aiess_settings[openai_model]"
+								   value="<?php echo esc_attr( $options['openai_model'] ?? 'gpt-4o-mini' ); ?>"
+								   class="regular-text"></td>
+					</tr>
+				</table>
+
+				<!-- Claude -->
+				<table class="form-table aiess-provider-fields" id="aiess-fields-claude" role="presentation">
+					<tr><th colspan="2"><strong><?php esc_html_e( 'Claude (Anthropic) Setup', 'ai-email-spam-shield' ); ?></strong></th></tr>
+					<tr><td colspan="2"><details><summary><?php esc_html_e( 'Setup Instructions', 'ai-email-spam-shield' ); ?></summary>
+					<p class="description"><?php esc_html_e( 'Get your API key from console.anthropic.com → API Keys. Recommended model: claude-haiku-4-5-20251001 (fastest and most affordable).', 'ai-email-spam-shield' ); ?></p>
+					</details></td></tr>
+					<tr>
+						<th><label for="aiess_claude_key"><?php esc_html_e( 'API Key', 'ai-email-spam-shield' ); ?></label></th>
+						<td><input type="password" id="aiess_claude_key" name="aiess_settings[claude_key]"
+								   value="<?php echo esc_attr( $options['claude_key'] ?? '' ); ?>"
+								   class="regular-text" autocomplete="new-password"></td>
+					</tr>
+					<tr>
+						<th><label for="aiess_claude_model"><?php esc_html_e( 'Model', 'ai-email-spam-shield' ); ?></label></th>
+						<td><input type="text" id="aiess_claude_model" name="aiess_settings[claude_model]"
+								   value="<?php echo esc_attr( $options['claude_model'] ?? 'claude-haiku-4-5-20251001' ); ?>"
+								   class="regular-text"></td>
+					</tr>
+				</table>
+
+				<!-- Gemini -->
+				<table class="form-table aiess-provider-fields" id="aiess-fields-gemini" role="presentation">
+					<tr><th colspan="2"><strong><?php esc_html_e( 'Gemini (Google) Setup', 'ai-email-spam-shield' ); ?></strong></th></tr>
+					<tr><td colspan="2"><details><summary><?php esc_html_e( 'Setup Instructions', 'ai-email-spam-shield' ); ?></summary>
+					<p class="description"><?php esc_html_e( 'Get your API key from aistudio.google.com → Get API key. Recommended model: gemini-1.5-flash. Free tier available.', 'ai-email-spam-shield' ); ?></p>
+					</details></td></tr>
+					<tr>
+						<th><label for="aiess_gemini_key"><?php esc_html_e( 'API Key', 'ai-email-spam-shield' ); ?></label></th>
+						<td><input type="password" id="aiess_gemini_key" name="aiess_settings[gemini_key]"
+								   value="<?php echo esc_attr( $options['gemini_key'] ?? '' ); ?>"
+								   class="regular-text" autocomplete="new-password"></td>
+					</tr>
+					<tr>
+						<th><label for="aiess_gemini_model"><?php esc_html_e( 'Model', 'ai-email-spam-shield' ); ?></label></th>
+						<td><input type="text" id="aiess_gemini_model" name="aiess_settings[gemini_model]"
+								   value="<?php echo esc_attr( $options['gemini_model'] ?? 'gemini-1.5-flash' ); ?>"
+								   class="regular-text"></td>
+					</tr>
+				</table>
+
+				<!-- Groq -->
+				<table class="form-table aiess-provider-fields" id="aiess-fields-groq" role="presentation">
+					<tr><th colspan="2"><strong><?php esc_html_e( 'Groq Setup', 'ai-email-spam-shield' ); ?></strong></th></tr>
+					<tr><td colspan="2"><details><summary><?php esc_html_e( 'Setup Instructions', 'ai-email-spam-shield' ); ?></summary>
+					<p class="description"><?php esc_html_e( 'Get your API key from console.groq.com → API Keys. Groq runs open-source models at very high speed. Recommended: llama-3.1-8b-instant.', 'ai-email-spam-shield' ); ?></p>
+					</details></td></tr>
+					<tr>
+						<th><label for="aiess_groq_key"><?php esc_html_e( 'API Key', 'ai-email-spam-shield' ); ?></label></th>
+						<td><input type="password" id="aiess_groq_key" name="aiess_settings[groq_key]"
+								   value="<?php echo esc_attr( $options['groq_key'] ?? '' ); ?>"
+								   class="regular-text" autocomplete="new-password"></td>
+					</tr>
+					<tr>
+						<th><label for="aiess_groq_model"><?php esc_html_e( 'Model', 'ai-email-spam-shield' ); ?></label></th>
+						<td><input type="text" id="aiess_groq_model" name="aiess_settings[groq_model]"
+								   value="<?php echo esc_attr( $options['groq_model'] ?? 'llama-3.1-8b-instant' ); ?>"
+								   class="regular-text"></td>
+					</tr>
+				</table>
+
+				<!-- Cohere -->
+				<table class="form-table aiess-provider-fields" id="aiess-fields-cohere" role="presentation">
+					<tr><th colspan="2"><strong><?php esc_html_e( 'Cohere Setup', 'ai-email-spam-shield' ); ?></strong></th></tr>
+					<tr><td colspan="2"><details><summary><?php esc_html_e( 'Setup Instructions', 'ai-email-spam-shield' ); ?></summary>
+					<p class="description"><?php esc_html_e( 'Get your API key from dashboard.cohere.com → API Keys. Recommended model: command-r.', 'ai-email-spam-shield' ); ?></p>
+					</details></td></tr>
+					<tr>
+						<th><label for="aiess_cohere_key"><?php esc_html_e( 'API Key', 'ai-email-spam-shield' ); ?></label></th>
+						<td><input type="password" id="aiess_cohere_key" name="aiess_settings[cohere_key]"
+								   value="<?php echo esc_attr( $options['cohere_key'] ?? '' ); ?>"
+								   class="regular-text" autocomplete="new-password"></td>
+					</tr>
+					<tr>
+						<th><label for="aiess_cohere_model"><?php esc_html_e( 'Model', 'ai-email-spam-shield' ); ?></label></th>
+						<td><input type="text" id="aiess_cohere_model" name="aiess_settings[cohere_model]"
+								   value="<?php echo esc_attr( $options['cohere_model'] ?? 'command-r' ); ?>"
+								   class="regular-text"></td>
+					</tr>
+				</table>
+
+				<!-- DeepSeek -->
+				<table class="form-table aiess-provider-fields" id="aiess-fields-deepseek" role="presentation">
+					<tr><th colspan="2"><strong><?php esc_html_e( 'DeepSeek Setup', 'ai-email-spam-shield' ); ?></strong></th></tr>
+					<tr><td colspan="2"><details><summary><?php esc_html_e( 'Setup Instructions', 'ai-email-spam-shield' ); ?></summary>
+					<p class="description"><?php esc_html_e( 'Get your API key from platform.deepseek.com → API Keys. Recommended model: deepseek-chat. Very cost-effective.', 'ai-email-spam-shield' ); ?></p>
+					</details></td></tr>
+					<tr>
+						<th><label for="aiess_deepseek_key"><?php esc_html_e( 'API Key', 'ai-email-spam-shield' ); ?></label></th>
+						<td><input type="password" id="aiess_deepseek_key" name="aiess_settings[deepseek_key]"
+								   value="<?php echo esc_attr( $options['deepseek_key'] ?? '' ); ?>"
+								   class="regular-text" autocomplete="new-password"></td>
+					</tr>
+					<tr>
+						<th><label for="aiess_deepseek_model"><?php esc_html_e( 'Model', 'ai-email-spam-shield' ); ?></label></th>
+						<td><input type="text" id="aiess_deepseek_model" name="aiess_settings[deepseek_model]"
+								   value="<?php echo esc_attr( $options['deepseek_model'] ?? 'deepseek-chat' ); ?>"
+								   class="regular-text"></td>
+					</tr>
+				</table>
+
+				<!-- Ollama -->
+				<table class="form-table aiess-provider-fields" id="aiess-fields-ollama" role="presentation">
+					<tr><th colspan="2"><strong><?php esc_html_e( 'Ollama Setup', 'ai-email-spam-shield' ); ?></strong></th></tr>
+					<tr><td colspan="2"><details><summary><?php esc_html_e( 'Setup Instructions', 'ai-email-spam-shield' ); ?></summary>
+					<p class="description"><?php esc_html_e( 'Install Ollama on your server (ollama.com), then pull a model: ollama pull llama3. Make sure the Ollama API is reachable from your WordPress server. No API key required.', 'ai-email-spam-shield' ); ?></p>
+					</details></td></tr>
+					<tr>
+						<th><label for="aiess_ollama_url"><?php esc_html_e( 'Ollama Base URL', 'ai-email-spam-shield' ); ?></label></th>
+						<td><input type="url" id="aiess_ollama_url" name="aiess_settings[ollama_url]"
+								   value="<?php echo esc_attr( $options['ollama_url'] ?? 'http://localhost:11434' ); ?>"
+								   class="regular-text"></td>
+					</tr>
+					<tr>
+						<th><label for="aiess_ollama_model"><?php esc_html_e( 'Model Name', 'ai-email-spam-shield' ); ?></label></th>
+						<td><input type="text" id="aiess_ollama_model" name="aiess_settings[ollama_model]"
+								   value="<?php echo esc_attr( $options['ollama_model'] ?? '' ); ?>"
+								   class="regular-text" placeholder="e.g. llama3"></td>
+					</tr>
+				</table>
+
+				<!-- OpenAI-compatible -->
+				<table class="form-table aiess-provider-fields" id="aiess-fields-openai_compat" role="presentation">
+					<tr><th colspan="2"><strong><?php esc_html_e( 'OpenAI-Compatible Setup', 'ai-email-spam-shield' ); ?></strong></th></tr>
+					<tr><td colspan="2"><details><summary><?php esc_html_e( 'Setup Instructions', 'ai-email-spam-shield' ); ?></summary>
+					<p class="description"><?php esc_html_e( 'Works with LM Studio, Jan, LocalAI, and any server that implements the OpenAI Chat Completions API. Enter the base URL (e.g. http://localhost:1234/v1) — the plugin appends /chat/completions automatically.', 'ai-email-spam-shield' ); ?></p>
+					</details></td></tr>
+					<tr>
+						<th><label for="aiess_openai_compat_url"><?php esc_html_e( 'Base URL', 'ai-email-spam-shield' ); ?></label></th>
+						<td><input type="url" id="aiess_openai_compat_url" name="aiess_settings[openai_compat_url]"
+								   value="<?php echo esc_attr( $options['openai_compat_url'] ?? '' ); ?>"
+								   class="regular-text" placeholder="http://localhost:1234/v1"></td>
+					</tr>
+					<tr>
+						<th><label for="aiess_openai_compat_key"><?php esc_html_e( 'API Key (optional)', 'ai-email-spam-shield' ); ?></label></th>
+						<td><input type="password" id="aiess_openai_compat_key" name="aiess_settings[openai_compat_key]"
+								   value="<?php echo esc_attr( $options['openai_compat_key'] ?? '' ); ?>"
+								   class="regular-text" autocomplete="new-password"></td>
+					</tr>
+					<tr>
+						<th><label for="aiess_openai_compat_model"><?php esc_html_e( 'Model Name', 'ai-email-spam-shield' ); ?></label></th>
+						<td><input type="text" id="aiess_openai_compat_model" name="aiess_settings[openai_compat_model]"
+								   value="<?php echo esc_attr( $options['openai_compat_model'] ?? '' ); ?>"
+								   class="regular-text" placeholder="e.g. phi-3"></td>
+					</tr>
+				</table>
+
+				<!-- Scoring weights (always visible) -->
+				<table class="form-table" role="presentation">
 					<tr>
 						<th scope="row"><label for="aiess_threshold"><?php esc_html_e( 'Spam Threshold', 'ai-email-spam-shield' ); ?></label></th>
 						<td>
@@ -176,13 +430,30 @@ class Admin {
 									   value="<?php echo esc_attr( $options['rule_weight'] ?? '0.3' ); ?>"
 									   min="0" max="1" step="0.1" class="small-text">
 							</label>
-							<p class="description"><?php esc_html_e( 'Weights for the final score formula: (AI × AI Weight) + (Rules × Rule Weight). Should sum to 1.0.', 'ai-email-spam-shield' ); ?></p>
 						</td>
 					</tr>
 				</table>
+
 				<?php submit_button( esc_html__( 'Save Settings', 'ai-email-spam-shield' ) ); ?>
 			</form>
 		</div>
+
+		<script>
+		(function () {
+			var select = document.getElementById('aiess_ai_provider');
+			var tables = document.querySelectorAll('.aiess-provider-fields');
+
+			function showActiveProvider() {
+				var val = select.value;
+				tables.forEach(function (t) {
+					t.style.display = t.id === 'aiess-fields-' + val ? '' : 'none';
+				});
+			}
+
+			select.addEventListener('change', showActiveProvider);
+			showActiveProvider();
+		}());
+		</script>
 		<?php
 	}
 
