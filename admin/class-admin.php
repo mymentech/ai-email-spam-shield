@@ -258,6 +258,16 @@ class Admin {
 					</tr>
 				</table>
 
+				<?php if ( ! get_user_meta( get_current_user_id(), 'aiess_privacy_notice_dismissed', true ) ) : ?>
+				<div id="aiess-settings-privacy-notice" class="notice notice-warning" style="display:none;margin:5px 0 15px;">
+					<p>
+						<strong><?php esc_html_e( 'Privacy Notice:', 'ai-email-spam-shield' ); ?></strong>
+						<?php esc_html_e( 'The selected AI provider will receive email subject lines and message bodies for spam scoring. This data is transmitted to an external server. Ensure your privacy policy covers this processing.', 'ai-email-spam-shield' ); ?>
+						&nbsp;<a href="#" id="aiess-settings-dismiss-privacy"><?php esc_html_e( 'Dismiss', 'ai-email-spam-shield' ); ?></a>
+					</p>
+				</div>
+				<?php endif; ?>
+
 				<!-- Self-hosted -->
 				<table class="form-table aiess-provider-fields" id="aiess-fields-self_hosted" role="presentation">
 					<tr><th colspan="2"><strong><?php esc_html_e( 'Self-Hosted Setup', 'ai-email-spam-shield' ); ?></strong></th></tr>
@@ -481,18 +491,37 @@ class Admin {
 
 		<script>
 		(function () {
-			var select = document.getElementById('aiess_ai_provider');
-			var tables = document.querySelectorAll('.aiess-provider-fields');
+			var select     = document.getElementById('aiess_ai_provider');
+			var tables     = document.querySelectorAll('.aiess-provider-fields');
+			var privNotice = document.getElementById('aiess-settings-privacy-notice');
+			var localProvs = ['self_hosted', 'ollama'];
 
 			function showActiveProvider() {
 				var val = select.value;
 				tables.forEach(function (t) {
 					t.style.display = t.id === 'aiess-fields-' + val ? '' : 'none';
 				});
+				if ( privNotice ) {
+					privNotice.style.display = localProvs.indexOf(val) === -1 ? '' : 'none';
+				}
 			}
 
 			select.addEventListener('change', showActiveProvider);
 			showActiveProvider();
+
+			var dismissLink = document.getElementById('aiess-settings-dismiss-privacy');
+			if ( dismissLink ) {
+				dismissLink.addEventListener('click', function (e) {
+					e.preventDefault();
+					fetch(ajaxurl, {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+						body: 'action=aiess_dismiss_privacy_notice&nonce=<?php echo esc_js( wp_create_nonce( 'aiess_dismiss_privacy' ) ); ?>'
+					}).then(function () {
+						if ( privNotice ) { privNotice.style.display = 'none'; }
+					});
+				});
+			}
 		}());
 		</script>
 		<?php
