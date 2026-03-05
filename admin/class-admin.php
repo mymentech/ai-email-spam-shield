@@ -26,6 +26,8 @@ class Admin {
 		add_action( 'admin_post_aiess_clear_logs', array( $this, 'handle_clear_logs' ) );
 		add_action( 'wp_ajax_aiess_test_scan',     array( $this, 'handle_test_scan' ) );
 		add_action( 'admin_enqueue_scripts',       array( $this, 'enqueue_assets' ) );
+		add_action( 'admin_notices',                        array( $this, 'render_privacy_notice' ) );
+		add_action( 'wp_ajax_aiess_dismiss_privacy_notice', array( $this, 'handle_dismiss_privacy_notice' ) );
 	}
 
 	// -------------------------------------------------------------------------
@@ -109,6 +111,44 @@ class Admin {
 			'openai_compat_key'   => sanitize_text_field( $input['openai_compat_key'] ?? '' ),
 			'openai_compat_model' => sanitize_text_field( $input['openai_compat_model'] ?? '' ),
 		];
+	}
+
+	public function render_privacy_notice(): void {
+		if ( get_user_meta( get_current_user_id(), 'aiess_privacy_notice_dismissed', true ) ) {
+			return;
+		}
+		$nonce = wp_create_nonce( 'aiess_dismiss_privacy' );
+		?>
+		<div id="aiess-privacy-notice" class="notice notice-warning is-dismissible">
+			<p>
+				<strong><?php esc_html_e( 'AI Email Spam Shield — Privacy Notice', 'ai-email-spam-shield' ); ?></strong><br>
+				<?php esc_html_e( 'When using a cloud AI provider, AI Email Spam Shield transmits email subjects and message bodies to the provider\'s API for spam analysis. Email content may leave your server. Please review and update your site\'s privacy policy to inform users of this data processing.', 'ai-email-spam-shield' ); ?>
+			</p>
+		</div>
+		<script>
+		(function () {
+			document.addEventListener('click', function (e) {
+				var btn = e.target.closest('.notice-dismiss');
+				if ( btn && btn.closest('#aiess-privacy-notice') ) {
+					fetch(ajaxurl, {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+						body: 'action=aiess_dismiss_privacy_notice&nonce=<?php echo esc_js( $nonce ); ?>'
+					});
+				}
+			});
+		}());
+		</script>
+		<?php
+	}
+
+	public function handle_dismiss_privacy_notice(): void {
+		check_ajax_referer( 'aiess_dismiss_privacy', 'nonce' );
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( 'Unauthorized' );
+		}
+		update_user_meta( get_current_user_id(), 'aiess_privacy_notice_dismissed', 1 );
+		wp_send_json_success();
 	}
 
 	// -------------------------------------------------------------------------

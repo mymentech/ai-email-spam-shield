@@ -116,3 +116,51 @@ if ( ! function_exists( 'wp_remote_retrieve_response_code' ) ) {
 if ( ! function_exists( 'wp_remote_retrieve_body' ) ) {
     function wp_remote_retrieve_body( $response ): string { return ''; }
 }
+if ( ! function_exists( 'get_user_meta' ) ) {
+    function get_user_meta( int $user_id, string $key = '', bool $single = false ) { return ''; }
+}
+if ( ! function_exists( 'update_user_meta' ) ) {
+    function update_user_meta( int $user_id, string $key, $value, $prev = '' ) { return true; }
+}
+if ( ! function_exists( 'get_current_user_id' ) ) {
+    function get_current_user_id(): int { return 0; }
+}
+if ( ! function_exists( 'wp_create_nonce' ) ) {
+    function wp_create_nonce( $action = -1 ): string { return 'stub_nonce'; }
+}
+if ( ! function_exists( 'esc_js' ) ) {
+    function esc_js( string $text ): string { return $text; }
+}
+if ( ! function_exists( 'esc_html__' ) ) {
+    function esc_html__( string $text, string $domain = 'default' ): string { return $text; }
+}
+if ( ! function_exists( 'esc_html_e' ) ) {
+    function esc_html_e( string $text, string $domain = 'default' ): void { echo $text; }
+}
+if ( ! function_exists( 'check_ajax_referer' ) ) {
+    function check_ajax_referer( $action = -1, $query_arg = false, bool $die = true ) { return 1; }
+}
+if ( ! function_exists( 'current_user_can' ) ) {
+    function current_user_can( string $capability ): bool { return false; }
+}
+if ( ! function_exists( 'wp_send_json_success' ) ) {
+    function wp_send_json_success( $data = null, int $status_code = 200, int $flags = 0 ): void {}
+}
+if ( ! function_exists( 'wp_send_json_error' ) ) {
+    function wp_send_json_error( $data = null, int $status_code = 200, int $flags = 0 ): void {}
+}
+if ( ! function_exists( 'add_action' ) ) {
+    function add_action( string $hook, $callback, int $priority = 10, int $args = 1 ): true { return true; }
+}
+if ( ! function_exists( 'add_menu_page' ) ) {
+    function add_menu_page( ...$args ): string { return ''; }
+}
+if ( ! function_exists( 'add_submenu_page' ) ) {
+    function add_submenu_page( ...$args ): string { return ''; }
+}
+if ( ! function_exists( 'register_setting' ) ) {
+    function register_setting( ...$args ): void {}
+}
+if ( ! function_exists( 'wp_enqueue_style' ) ) {
+    function wp_enqueue_style( ...$args ): void {}
+}
