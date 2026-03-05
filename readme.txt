@@ -2,7 +2,7 @@
 Contributors: mymentech
 Tags: spam, email, contact form, spam filter, ai, machine learning, spam detection, antispam
 Requires at least: 6.0
-Tested up to: 6.7
+Tested up to: 6.9
 Stable tag: 1.1.0
 Requires PHP: 8.0
 License: GPLv2 or later
