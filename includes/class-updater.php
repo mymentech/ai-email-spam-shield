@@ -12,6 +12,8 @@ namespace AI_Email_Spam_Shield;
 
 defined( 'ABSPATH' ) || exit;
 
+// Parsedown must be loaded before PUC parses GitHub release notes.
+require_once AIESS_PLUGIN_DIR . 'lib/plugin-update-checker/vendor/Parsedown.php';
 require_once AIESS_PLUGIN_DIR . 'lib/plugin-update-checker/plugin-update-checker.php';
 
 use YahnisElsts\PluginUpdateChecker\v5\PucFactory;
