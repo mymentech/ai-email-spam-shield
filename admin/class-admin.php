@@ -46,6 +46,7 @@ class Admin {
 		);
 		add_submenu_page( 'aiess-dashboard', esc_html__( 'Dashboard', 'ai-email-spam-shield' ),    esc_html__( 'Dashboard', 'ai-email-spam-shield' ),    'manage_options', 'aiess-dashboard',     array( $this, 'page_dashboard' ) );
 		add_submenu_page( 'aiess-dashboard', esc_html__( 'Settings', 'ai-email-spam-shield' ),     esc_html__( 'Settings', 'ai-email-spam-shield' ),     'manage_options', 'aiess-settings',      array( $this, 'page_settings' ) );
+		add_submenu_page( 'aiess-dashboard', esc_html__( 'Phrases', 'ai-email-spam-shield' ),      esc_html__( 'Phrases', 'ai-email-spam-shield' ),      'manage_options', 'aiess-phrases',       array( $this, 'page_phrases' ) );
 		add_submenu_page( 'aiess-dashboard', esc_html__( 'Logs', 'ai-email-spam-shield' ),         esc_html__( 'Logs', 'ai-email-spam-shield' ),         'manage_options', 'aiess-logs',          array( $this, 'page_logs' ) );
 		add_submenu_page( 'aiess-dashboard', esc_html__( 'Test Scanner', 'ai-email-spam-shield' ), esc_html__( 'Test Scanner', 'ai-email-spam-shield' ), 'manage_options', 'aiess-test-scanner',  array( $this, 'page_test_scanner' ) );
 	}
@@ -67,6 +68,31 @@ class Admin {
 			'aiess_settings',
 			array( 'sanitize_callback' => array( $this, 'sanitize_settings' ) )
 		);
+
+		register_setting(
+			'aiess_phrases_group',
+			'aiess_phrases',
+			array( 'sanitize_callback' => array( $this, 'sanitize_phrases' ) )
+		);
+	}
+
+	public function sanitize_phrases( $input ): array {
+		$result = array( 'spam' => array(), 'hard_block' => array() );
+
+		foreach ( array( 'spam', 'hard_block' ) as $tier ) {
+			$raw   = (array) ( $input[ $tier ] ?? array() );
+			$clean = array();
+			foreach ( $raw as $phrase ) {
+				$phrase = sanitize_text_field( wp_unslash( (string) $phrase ) );
+				if ( '' === $phrase ) {
+					continue;
+				}
+				$clean[] = mb_substr( $phrase, 0, 200 );
+			}
+			$result[ $tier ] = array_slice( array_values( array_unique( $clean ) ), 0, 200 );
+		}
+
+		return $result;
 	}
 
 	public function sanitize_settings( array $input ): array {
@@ -524,6 +550,99 @@ class Admin {
 					});
 				});
 			}
+		}());
+		</script>
+		<?php
+	}
+
+	public function page_phrases(): void {
+		$phrases             = get_option( 'aiess_phrases', array( 'spam' => array(), 'hard_block' => array() ) );
+		$spam_phrases        = (array) ( $phrases['spam']       ?? array() );
+		$hard_block_phrases  = (array) ( $phrases['hard_block'] ?? array() );
+		?>
+		<div class="wrap aiess-wrap">
+			<h1><?php esc_html_e( 'AI Spam Shield — Phrase Management', 'ai-email-spam-shield' ); ?></h1>
+			<p class="description">
+				<?php esc_html_e( 'Manage custom phrases used by the blocking algorithm. Changes take effect on the next email scan.', 'ai-email-spam-shield' ); ?>
+			</p>
+
+			<form method="post" action="options.php">
+				<?php settings_fields( 'aiess_phrases_group' ); ?>
+
+				<div class="aiess-card">
+					<div class="aiess-card-header">
+						<h2><?php esc_html_e( 'Spam Phrases', 'ai-email-spam-shield' ); ?></h2>
+						<p class="description">
+							<?php esc_html_e( 'Emails containing these phrases receive a spam score boost (+0.20). They are blocked only if the total score exceeds your threshold.', 'ai-email-spam-shield' ); ?>
+						</p>
+					</div>
+					<div id="aiess-spam-repeater" class="aiess-repeater">
+						<?php foreach ( $spam_phrases as $phrase ) : ?>
+							<div class="aiess-repeater-row">
+								<input type="text"
+									   name="aiess_phrases[spam][]"
+									   value="<?php echo esc_attr( $phrase ); ?>"
+									   class="regular-text"
+									   placeholder="<?php esc_attr_e( 'Enter phrase…', 'ai-email-spam-shield' ); ?>">
+								<button type="button" class="aiess-remove-row button" aria-label="<?php esc_attr_e( 'Remove', 'ai-email-spam-shield' ); ?>">&#10005;</button>
+							</div>
+						<?php endforeach; ?>
+					</div>
+					<button type="button" class="button aiess-add-row" data-target="aiess-spam-repeater" data-name="aiess_phrases[spam][]">
+						+ <?php esc_html_e( 'Add Phrase', 'ai-email-spam-shield' ); ?>
+					</button>
+				</div>
+
+				<div class="aiess-card">
+					<div class="aiess-card-header">
+						<h2><?php esc_html_e( 'Hard-Block Phrases', 'ai-email-spam-shield' ); ?></h2>
+						<p class="description">
+							<?php esc_html_e( 'Emails containing these phrases are blocked immediately regardless of AI score or threshold. Use for zero-tolerance terms.', 'ai-email-spam-shield' ); ?>
+						</p>
+					</div>
+					<div id="aiess-hardblock-repeater" class="aiess-repeater">
+						<?php foreach ( $hard_block_phrases as $phrase ) : ?>
+							<div class="aiess-repeater-row">
+								<input type="text"
+									   name="aiess_phrases[hard_block][]"
+									   value="<?php echo esc_attr( $phrase ); ?>"
+									   class="regular-text"
+									   placeholder="<?php esc_attr_e( 'Enter phrase…', 'ai-email-spam-shield' ); ?>">
+								<button type="button" class="aiess-remove-row button" aria-label="<?php esc_attr_e( 'Remove', 'ai-email-spam-shield' ); ?>">&#10005;</button>
+							</div>
+						<?php endforeach; ?>
+					</div>
+					<button type="button" class="button aiess-add-row" data-target="aiess-hardblock-repeater" data-name="aiess_phrases[hard_block][]">
+						+ <?php esc_html_e( 'Add Phrase', 'ai-email-spam-shield' ); ?>
+					</button>
+				</div>
+
+				<?php submit_button( esc_html__( 'Save Phrases', 'ai-email-spam-shield' ) ); ?>
+			</form>
+		</div>
+
+		<script>
+		(function () {
+			function attachRemove( btn ) {
+				btn.addEventListener( 'click', function () {
+					btn.closest( '.aiess-repeater-row' ).remove();
+				} );
+			}
+
+			document.querySelectorAll( '.aiess-add-row' ).forEach( function ( btn ) {
+				btn.addEventListener( 'click', function () {
+					var repeater = document.getElementById( btn.dataset.target );
+					var row      = document.createElement( 'div' );
+					row.className = 'aiess-repeater-row';
+					row.innerHTML = '<input type="text" name="' + btn.dataset.name + '" class="regular-text" placeholder="<?php echo esc_js( __( 'Enter phrase…', 'ai-email-spam-shield' ) ); ?>">'
+					              + '<button type="button" class="aiess-remove-row button" aria-label="Remove">&#10005;</button>';
+					repeater.appendChild( row );
+					row.querySelector( 'input' ).focus();
+					attachRemove( row.querySelector( '.aiess-remove-row' ) );
+				} );
+			} );
+
+			document.querySelectorAll( '.aiess-remove-row' ).forEach( attachRemove );
 		}());
 		</script>
 		<?php
