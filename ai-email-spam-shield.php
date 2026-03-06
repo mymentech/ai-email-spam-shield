@@ -3,7 +3,7 @@
  * Plugin Name:       AI Email Spam Shield
  * Plugin URI:        https://www.mymentech.com/plugins/ai-email-spam-shield
  * Description:       Hybrid AI + rule-based spam detection for outgoing WordPress emails. Intercepts wp_mail(), Contact Form 7, WPForms, and Gravity Forms submissions.
- * Version:           1.1.0.1
+ * Version:           1.2.0
  * Author:            MymenTech
  * Author URI:        https://www.mymentech.com
  * License:           GPL-2.0-or-later
@@ -20,7 +20,7 @@
 defined( 'ABSPATH' ) || exit;
 
 // Plugin constants.
-define( 'AIESS_VERSION',     '1.1.0.1' );
+define( 'AIESS_VERSION',     '1.2.0' );
 define( 'AIESS_PLUGIN_FILE', __FILE__ );
 define( 'AIESS_PLUGIN_DIR',  plugin_dir_path( __FILE__ ) );
 define( 'AIESS_PLUGIN_URL',  plugin_dir_url( __FILE__ ) );
