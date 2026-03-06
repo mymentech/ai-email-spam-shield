@@ -8,7 +8,7 @@ Blocks spam before delivery — works with any form plugin.
 [![WordPress](https://img.shields.io/badge/WordPress-6.0%2B-blue?logo=wordpress)](https://wordpress.org/plugins/ai-email-spam-shield/)
 [![PHP](https://img.shields.io/badge/PHP-8.0%2B-777bb4?logo=php)](https://php.net)
 [![License](https://img.shields.io/badge/license-GPLv2%2B-green)](https://www.gnu.org/licenses/gpl-2.0.html)
-[![Version](https://img.shields.io/badge/version-1.2.0-orange)](CHANGELOG)
+[![Version](https://img.shields.io/badge/version-1.2.1-orange)](CHANGELOG)
 
 ---
 
@@ -129,6 +129,9 @@ If a **cloud AI provider** is configured, email content is transmitted to that p
 ---
 
 ## Changelog
+
+### 1.2.1
+- Fixed fatal error: `Class "Parsedown" not found` when update checker parses GitHub release notes
 
 ### 1.2.0
 - Added **Custom Phrase Management** — two-tier (spam / hard-block) phrase manager via new admin page
