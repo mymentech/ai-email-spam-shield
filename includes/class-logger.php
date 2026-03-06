@@ -213,4 +213,46 @@ class Logger {
             ),
         );
     }
+
+    /**
+     * Get per-day scan and block counts for the last N days.
+     *
+     * @param int $days Number of days to look back (default 7).
+     * @return array<int, array{date: string, scanned: int, blocked: int}>
+     */
+    public static function get_daily_stats( int $days = 7 ): array {
+        global $wpdb;
+        $table = $wpdb->prefix . self::TABLE_NAME;
+        $since = gmdate( 'Y-m-d', strtotime( "-{$days} days" ) );
+
+        $rows = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT DATE(created_at) AS date,
+                        COUNT(*) AS scanned,
+                        SUM(blocked) AS blocked
+                 FROM {$table}
+                 WHERE DATE(created_at) >= %s
+                 GROUP BY DATE(created_at)
+                 ORDER BY date ASC",
+                $since
+            ),
+            ARRAY_A
+        );
+
+        // Build a full date range with zero-filled defaults.
+        $result = array();
+        for ( $i = $days - 1; $i >= 0; $i-- ) {
+            $date            = gmdate( 'Y-m-d', strtotime( "-{$i} days" ) );
+            $result[ $date ] = array( 'date' => $date, 'scanned' => 0, 'blocked' => 0 );
+        }
+
+        foreach ( $rows ?: array() as $row ) {
+            if ( isset( $result[ $row['date'] ] ) ) {
+                $result[ $row['date'] ]['scanned'] = (int) $row['scanned'];
+                $result[ $row['date'] ]['blocked']  = (int) $row['blocked'];
+            }
+        }
+
+        return array_values( $result );
+    }
 }

@@ -55,6 +55,37 @@ class RulesEngineTest extends TestCase {
         $this->assertGreaterThanOrEqual( 0.10, $score );
     }
 
+    public function test_custom_spam_phrase_increases_score(): void {
+        Brain\Monkey\Functions\when( 'get_option' )
+            ->justReturn( array( 'spam' => array( 'buy my widget' ), 'hard_block' => array() ) );
+
+        $score = Rules_Engine::score( 'offer', 'please buy my widget today', '127.0.0.1' );
+        $this->assertGreaterThanOrEqual( 0.20, $score );
+    }
+
+    public function test_custom_hard_block_phrase_triggers_has_hard_block(): void {
+        Brain\Monkey\Functions\when( 'get_option' )
+            ->justReturn( array( 'spam' => array(), 'hard_block' => array( 'forbidden phrase' ) ) );
+
+        $this->assertTrue( Rules_Engine::has_hard_block( 'subject', 'this contains forbidden phrase here' ) );
+    }
+
+    public function test_empty_custom_phrases_has_no_effect(): void {
+        Brain\Monkey\Functions\when( 'get_option' )
+            ->justReturn( array( 'spam' => array(), 'hard_block' => array() ) );
+
+        $score = Rules_Engine::score( 'Hello', 'How can I help you today?', '127.0.0.1' );
+        $this->assertLessThan( 0.2, $score );
+    }
+
+    public function test_missing_custom_phrases_option_has_no_effect(): void {
+        Brain\Monkey\Functions\when( 'get_option' )
+            ->justReturn( array() );
+
+        $score = Rules_Engine::score( 'Hello', 'How can I help you today?', '127.0.0.1' );
+        $this->assertLessThan( 0.2, $score );
+    }
+
     public function test_score_capped_at_one(): void {
         $body  = 'BUY NOW FREE MONEY CRYPTO http://a.ru http://b.xyz http://c.click http://d.top $$$$ !!!!!';
         $score = Rules_Engine::score( 'URGENT DEAL!!!!', $body, '127.0.0.1' );

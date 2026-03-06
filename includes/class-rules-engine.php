@@ -79,6 +79,7 @@ class Rules_Engine {
         $score += self::check_suspicious_tlds( $body );
         $score += self::check_repeated_chars( $combined );
         $score += self::check_ip_rate( $ip );
+        $score += self::check_custom_phrases( $combined );
 
         return min( 1.0, $score );
     }
@@ -167,6 +168,17 @@ class Rules_Engine {
      */
     public static function has_hard_block( string $subject, string $body ): bool {
         $combined = $subject . ' ' . $body;
+        $custom    = get_option( 'aiess_phrases', array() );
+        $custom_hb = (array) ( $custom['hard_block'] ?? array() );
+        $lower     = strtolower( $combined );
+
+        foreach ( $custom_hb as $phrase ) {
+            $phrase = trim( (string) $phrase );
+            if ( $phrase !== '' && str_contains( $lower, strtolower( $phrase ) ) ) {
+                return true;
+            }
+        }
+
         return self::check_sexual_content( $combined ) > 0.0
             || self::check_darknet_phrases( $combined ) > 0.0;
     }
@@ -234,6 +246,38 @@ class Rules_Engine {
         }
 
         set_transient( $key, $count + 1, 2 * MINUTE_IN_SECONDS );
+        return 0.0;
+    }
+
+    /**
+     * Score custom phrases stored in the aiess_phrases option.
+     *
+     * - hard_block tier: +0.30 on first match (mirrors check_darknet_phrases)
+     * - spam tier:       +0.20 on first match (mirrors check_spam_phrases)
+     *
+     * Returns 0.0 when the option is absent or empty.
+     *
+     * @param string $text Combined subject + body.
+     * @return float
+     */
+    public static function check_custom_phrases( string $text ): float {
+        $phrases = get_option( 'aiess_phrases', array() );
+        $lower   = strtolower( $text );
+
+        foreach ( (array) ( $phrases['hard_block'] ?? array() ) as $phrase ) {
+            $phrase = trim( (string) $phrase );
+            if ( $phrase !== '' && str_contains( $lower, strtolower( $phrase ) ) ) {
+                return 0.30;
+            }
+        }
+
+        foreach ( (array) ( $phrases['spam'] ?? array() ) as $phrase ) {
+            $phrase = trim( (string) $phrase );
+            if ( $phrase !== '' && str_contains( $lower, strtolower( $phrase ) ) ) {
+                return 0.20;
+            }
+        }
+
         return 0.0;
     }
 }
