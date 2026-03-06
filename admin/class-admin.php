@@ -56,6 +56,17 @@ class Admin {
 			return;
 		}
 		wp_enqueue_style( 'aiess-admin', AIESS_PLUGIN_URL . 'admin/admin.css', array(), AIESS_VERSION );
+
+		// Chart.js only on the dashboard page.
+		if ( strpos( $hook, 'aiess-dashboard' ) !== false || strpos( $hook, 'toplevel_page_aiess-dashboard' ) !== false ) {
+			wp_enqueue_script(
+				'chartjs',
+				'https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js',
+				array(),
+				'4',
+				true
+			);
+		}
 	}
 
 	// -------------------------------------------------------------------------
@@ -183,9 +194,12 @@ class Admin {
 	// -------------------------------------------------------------------------
 
 	public function page_dashboard(): void {
-		$stats     = Logger::get_stats();
-		$options   = get_option( 'aiess_settings', array() );
-		$provider  = $options['ai_provider'] ?? 'self_hosted';
+		global $wpdb;
+
+		$stats    = Logger::get_stats();
+		$daily    = Logger::get_daily_stats( 7 );
+		$options  = get_option( 'aiess_settings', array() );
+		$provider = $options['ai_provider'] ?? 'self_hosted';
 
 		if ( 'self_hosted' === $provider ) {
 			$api_url    = esc_url_raw( $options['self_hosted_url'] ?? 'http://spam-api:8000' );
@@ -206,6 +220,18 @@ class Admin {
 			$field  = $key_fields[ $provider ] ?? '';
 			$api_ok = ! empty( $options[ $field ] );
 		}
+
+		// Overall blocked count for doughnut chart.
+		$tbl             = $wpdb->prefix . 'ai_spam_logs';
+		$overall_blocked = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$tbl} WHERE blocked = 1" ); // phpcs:ignore
+		$overall_allowed = max( 0, $stats['total_scanned'] - $overall_blocked );
+
+		$chart_data = wp_json_encode( array(
+			'labels'  => array_column( $daily, 'date' ),
+			'scanned' => array_column( $daily, 'scanned' ),
+			'blocked' => array_column( $daily, 'blocked' ),
+			'overall' => array( $overall_allowed, $overall_blocked ),
+		) );
 		?>
 		<div class="wrap aiess-wrap">
 			<h1><?php esc_html_e( 'AI Spam Shield — Dashboard', 'ai-email-spam-shield' ); ?></h1>
@@ -227,17 +253,82 @@ class Admin {
 				<div class="aiess-stat-card <?php echo $api_ok ? 'status-ok' : 'status-error'; ?>">
 					<span class="aiess-stat-number"><?php echo $api_ok ? '&#10003;' : '&#10007;'; ?></span>
 					<span class="aiess-stat-label">
-					<?php
-					if ( 'self_hosted' === $provider ) {
-						esc_html_e( 'AI API Status', 'ai-email-spam-shield' );
-					} else {
-						esc_html_e( 'AI Provider', 'ai-email-spam-shield' );
-					}
-					?>
-				</span>
+						<?php echo 'self_hosted' === $provider
+							? esc_html__( 'AI API Status', 'ai-email-spam-shield' )
+							: esc_html__( 'AI Provider', 'ai-email-spam-shield' ); ?>
+					</span>
+				</div>
+			</div>
+
+			<div class="aiess-charts-grid">
+				<div class="aiess-chart-card">
+					<h3><?php esc_html_e( 'Scanned vs Blocked — Last 7 Days', 'ai-email-spam-shield' ); ?></h3>
+					<canvas id="aiess-line-chart" height="80"></canvas>
+				</div>
+				<div class="aiess-chart-card">
+					<h3><?php esc_html_e( 'Overall Ratio', 'ai-email-spam-shield' ); ?></h3>
+					<canvas id="aiess-doughnut-chart" height="160"></canvas>
 				</div>
 			</div>
 		</div>
+
+		<script>
+		(function () {
+			var d = <?php echo $chart_data; // wp_json_encode output — safe. ?>;
+
+			new Chart( document.getElementById( 'aiess-line-chart' ), {
+				type: 'line',
+				data: {
+					labels: d.labels,
+					datasets: [
+						{
+							label: '<?php echo esc_js( __( 'Scanned', 'ai-email-spam-shield' ) ); ?>',
+							data: d.scanned,
+							borderColor: '#6c63ff',
+							backgroundColor: 'rgba(108,99,255,.1)',
+							tension: 0.3,
+							fill: true,
+							pointRadius: 4,
+						},
+						{
+							label: '<?php echo esc_js( __( 'Blocked', 'ai-email-spam-shield' ) ); ?>',
+							data: d.blocked,
+							borderColor: '#ff6584',
+							backgroundColor: 'rgba(255,101,132,.08)',
+							tension: 0.3,
+							fill: true,
+							pointRadius: 4,
+						}
+					]
+				},
+				options: {
+					responsive: true,
+					plugins: { legend: { position: 'bottom' } },
+					scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+				}
+			} );
+
+			new Chart( document.getElementById( 'aiess-doughnut-chart' ), {
+				type: 'doughnut',
+				data: {
+					labels: [
+						'<?php echo esc_js( __( 'Allowed', 'ai-email-spam-shield' ) ); ?>',
+						'<?php echo esc_js( __( 'Blocked', 'ai-email-spam-shield' ) ); ?>'
+					],
+					datasets: [ {
+						data: d.overall,
+						backgroundColor: [ '#43b89c', '#ff6584' ],
+						borderWidth: 2,
+					} ]
+				},
+				options: {
+					responsive: true,
+					plugins: { legend: { position: 'bottom' } },
+					cutout: '65%',
+				}
+			} );
+		}());
+		</script>
 		<?php
 	}
 
@@ -481,6 +572,7 @@ class Admin {
 				</table>
 
 				<!-- Scoring weights (always visible) -->
+				<div class="aiess-card">
 				<table class="form-table" role="presentation">
 					<tr>
 						<th scope="row"><label for="aiess_threshold"><?php esc_html_e( 'Spam Threshold', 'ai-email-spam-shield' ); ?></label></th>
@@ -510,6 +602,7 @@ class Admin {
 						</td>
 					</tr>
 				</table>
+				</div>
 
 				<?php submit_button( esc_html__( 'Save Settings', 'ai-email-spam-shield' ) ); ?>
 			</form>
