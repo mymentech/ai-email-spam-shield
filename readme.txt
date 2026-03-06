@@ -3,7 +3,7 @@ Contributors: mymentech
 Tags: spam, email, contact form, spam filter, ai, machine learning, spam detection, antispam
 Requires at least: 6.0
 Tested up to: 6.9
-Stable tag: 1.1.0.1
+Stable tag: 1.2.0
 Requires PHP: 8.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -107,6 +107,12 @@ Yes. Go to **AI Spam Shield → Test Scanner**, paste a subject and message body
 1. Plugin overview — status dashboard, spam signals, key features, and live logs at a glance
 
 == Changelog ==
+
+= 1.2.0 =
+* Added Custom Phrase Management — two-tier (spam / hard-block) phrase manager via new Phrases admin page
+* Added Chart.js charts to dashboard: scanned vs blocked line chart + allowed/blocked doughnut
+* Redesigned admin UI with modern color palette (#6c63ff purple, responsive card grid)
+* Added Logger::get_daily_stats() for per-day chart data
 
 = 1.1.0.1 =
 * Added plugin banner and screenshot assets
